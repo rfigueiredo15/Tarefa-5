@@ -1,0 +1,154 @@
+---
+title: "Tarefa 5"
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+date: "2024-08-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#Baixando os pacotes
+pacman::p_load(haven, tidyverse, readxl, dplyr, foreign, rmarkdown, ggplot2)
+#Baixando os dados
+Dados_tcc_2010_2019 <- read_excel("~/Desktop/Dados tcc - 2010 - 2019.xlsx", 
+                                  col_types = c("text", "text", "date", 
+                                                 "date", "numeric", "numeric", "numeric", 
+                                                 "numeric", "numeric", "numeric"))
+# Limpeza e visualização dos dados
+Dados_tcc_2010_2019 <- janitor::clean_names(Dados_tcc_2010_2019)
+
+View(Dados_tcc_2010_2019)
+Dados_tcc_2010_2019 <- janitor::clean_names(Dados_tcc_2010_2019)
+
+library(dplyr)
+Diretores <- Dados_tcc_2010_2019 %>%
+  filter(grepl("diretor", cargo, ignore.case = TRUE))
+view(Diretores)
+media_tempo <- Diretores %>%
+  summarise(media = mean(tempo_de_tramitacao_dias_ate_a_aprovacao, na.rm = TRUE))
+view(media_tempo)
+
+#Em cargos mais relevantes como o de diretores a média do tempo de tramitação é de 37 dias
+
+Embaixadores <- Dados_tcc_2010_2019 %>%
+  filter(grepl("embaixador", cargo, ignore.case =TRUE))
+view(Embaixadores)
+media_tempo2 <- Embaixadores %>%
+  summarise(media = mean (tempo_de_tramitacao_dias_ate_a_aprovacao, na.rm = TRUE))
+view(media_tempo2)
+ #Para cargos com menos relevancia na governabilidade nacional, a média de aprovação é maior, 
+#levando cerca de 70 dias para aprovação da autoridade.
+  
+# Verificar estrutura dos dados
+str(Diretores)
+str(Embaixadores)
+
+# Adicionar uma coluna identificando o grupo
+Diretores <- Diretores %>% mutate(grupo = "Diretores")
+Embaixadores <- Embaixadores %>% mutate(grupo = "Embaixadores")
+
+# Combinar os dados
+dados_combinados <- bind_rows(Diretores, Embaixadores)
+
+# Realizar o teste t de duas amostras
+resultado_teste <- t.test(tempo_de_tramitacao_dias_ate_a_aprovacao ~ grupo, data = dados_combinados)
+
+# Exibir os resultados do teste t
+print(resultado_teste)
+
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+library(ggplot2)
+
+# Criar o gráfico
+ggplot(dados_combinados, aes(x = grupo, y = tempo_de_tramitacao_dias_ate_a_aprovacao, fill = grupo)) +
+  geom_boxplot(outlier.colour = "red", outlier.size = 2) +
+  labs(
+    title = "Tempo de Tramitação por Cargo",
+    x = "Cargo",
+    y = "Tempo de Tramitação (dias)"
+  ) +
+  theme_minimal() +
+  scale_fill_manual(values = c("Diretores" = "blue", "Embaixadores" = "green"))
+
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r results, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+#Interpretando os resultados:
+#Resultados do Teste t
+#Estatística t:#Valor: -6.1892
+#Isso indica a magnitude da diferença entre as médias ajustada pela variabilidade 
+#dos dados. Um valor t negativo sugere que a média do grupo "Diretores" é menor do que 
+#a média do grupo "Embaixadores".
+#Graus de Liberdade (df):
+  
+  #Valor: 684.49
+#Os graus de liberdade são utilizados para determinar a distribuição t apropriada. 
+#O valor não é um número inteiro porque o teste t foi realizado com uma correção 
+#de Welch para variâncias desiguais.
+#Valor p:
+  
+  #Valor: 1.041e-09
+#O valor p é extremamente pequeno e muito menor do que o nível de significância 
+#padrão de 0.05. Isso sugere que há uma diferença estatisticamente significativa 
+#entre os tempos de tramitação dos dois grupos.
+#Intervalo de Confiança de 95%:
+```
+
+```{r explicacao, include=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+#Intervalo: -21.42709 a -11.10633
+#Este intervalo fornece a faixa em que a verdadeira diferença entre as médias 
+#está com 95% de confiança. Como o intervalo é completamente negativo, 
+#isso reforça a conclusão de que a média de "Diretores" é significativamente 
+#menor do que a média de "Embaixadores".
+#Estimativas das Médias:
+  
+  #Média do grupo "Diretores": 54.43478
+#Média do grupo "Embaixadores": 70.70149
+#As médias mostram que, em média, os "Diretores" têm um tempo de tramitação menor 
+#comparado aos "Embaixadores".
+#Interpretação dos Resultados
+#Diferença Significativa: O teste t indica que há uma diferença significativa entre os 
+#tempos de tramitação dos "Diretores" e "Embaixadores". 
+#O valor p muito pequeno sugere que a diferença observada não é devida ao acaso.
+
+#Média Menor para Diretores: A média de tramitação para "Diretores" (54.43 dias) 
+#é significativamente menor do que para "Embaixadores" (70.70 dias), 
+#conforme indicado pelo intervalo de confiança negativo. 
+#Isso pode sugerir que o processo de aprovação para "Diretores" é mais rápido 
+#em comparação com "Embaixadores".
+
+```
+
+```{r pressure, echo=TRUE}
+plot(pressure)
+#O Teste T foi escolhido por analisar duas amostras independetes, verificando se são 
+#significativamente diferentes entre si, assim, 
+#podemos verificar que cargos mais relevantes para a governabilidade nacional tem um processo
+#mais célere de tramitação.
+#Além disso, minhas amostras possuem um tamanho significativo, permitindo o uso do teste t.
+#Apesar de serem de variâncias diferentes, no teste T fizemos a correção de Welch.
+
+#As potencialidades do teste t podem ser simplicidade, versatilidade, flexibilidade e
+#correção para variâncias desiguais.
+
+#As limitações do teste T estão principalmente em poder analisar apenas dois grupos,
+#além de que os outliers podem distorcer as médias, e mesmo com a correção de Welch, se 
+#a variância for muito alta, os resultados podem não ser confiáveis. 
+```
